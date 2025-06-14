@@ -1,18 +1,10 @@
-torch>=1.6.0
-torch-geometric>=1.6.1
-torchvision>=0.7.0
-tensorboardX
+torch==2.6.0
+torch-geometric==2.2.0
+torchvision==0.19.0  # sesuaikan dengan versi yang terinstall
+tensorboardX==2.6.2.2  # sesuaikan dengan versi yang terinstall
 seaborn==0.10.1
+matplotlib==3.5.3
+numpy>=1.24.0
 
-# To install separately 
-# torch-sparse
-# torch-cluster
-# torch-scatter
-
-# Colab specific 
-# torch-geometric==1.6.1
-# torch==1.6.0+cu101
-# torchvision==0.7.0+cu101
-# torch-sparse==latest+cu101
-# torch-cluster==latest+cu101
-# torch-scatter==latest+cu101
+# Install torch-scatter, torch-sparse, torch-cluster separately:
+# pip install torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.6.0+cpu.html

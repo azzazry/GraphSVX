@@ -461,9 +461,9 @@ def read_graphfile(datadir, dataname, max_nodes=None, edge_labels=False):
 	try:
 		with open(filename_node_attrs) as f:
 			for line in f:
-				line = line.strip("\s\n")
+				line = line.strip(" \t\n")  # atau line.strip()
 				attrs = [
-					float(attr) for attr in re.split("[,\s]+", line) if not attr == ""
+					float(attr) for attr in re.split(r"[,\s]+", line) if not attr == ""
 				]
 				node_attrs.append(np.array(attrs))
 	except IOError:

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphSAGE + GraphSVX Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #3498db, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .graphsage-section {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+        
+        .graphsvx-section {
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+        }
+        
+        .graph-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        button.active {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #fff;
+        }
+        
+        .info-panel {
+            background: rgba(44, 62, 80, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #3498db;
+        }
+        
+        .phase-indicator {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        svg {
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .node:hover {
+            stroke-width: 4px;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+        
+        .anomaly {
+            stroke: #e74c3c;
+            stroke-width: 3px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { stroke-opacity: 0.5; }
+            50% { stroke-opacity: 1; }
+            100% { stroke-opacity: 0.5; }
+        }
+        
+        .explanation-path {
+            stroke: #f39c12;
+            stroke-width: 4px;
+            stroke-dasharray: 10,5;
+            animation: dash 2s linear infinite;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -30;
+            }
+        }
+        
+        .step-content {
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GraphSAGE + GraphSVX untuk Insider Threat Detection</h1>
+        
+        <div class="controls">
+            <button onclick="showStep('overview')" class="active" id="btn-overview">Overview</button>
+            <button onclick="showStep('graphsage')" id="btn-graphsage">GraphSAGE Training</button>
+            <button onclick="showStep('detection')" id="btn-detection">Anomaly Detection</button>
+            <button onclick="showStep('graphsvx')" id="btn-graphsvx">GraphSVX Explanation</button>
+        </div>
+        
+        <div id="overview" class="step-content active">
+            <div class="info-panel">
+                <h3>🎯 Objective: Mendeteksi Insider Threat dengan Interpretable AI</h3>
+                <p><strong>Dataset:</strong> CERT Dataset (Modified) dengan fokus pada behavioral patterns</p>
+                <p><strong>Node Types:</strong> User, PC, File, URL (4 heterogeneous node types)</p>
+                <p><strong>Metodologi:</strong> GraphSAGE untuk deteksi + GraphSVX untuk interpretability</p>
+            </div>
+            
+            <div class="graph-container">
+                <svg id="overview-graph" width="100%" height="500"></svg>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3498db;"></div>
+                    <span>User</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #2ecc71;"></div>
+                    <span>PC</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f39c12;"></div>
+                    <span>File</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #9b59b6;"></div>
+                    <span>URL</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e74c3c;"></div>
+                    <span>Anomalous</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="graphsage" class="step-content">
+            <div class="section graphsage-section">
+                <h2>🧠 GraphSAGE Training Process</h2>
+                <div class="phase-indicator">Phase 1: Neighbor Sampling & Aggregation</div>
+            </div>
+            
+            <div class="graph-container">
+                <svg id="graphsage-graph" width="100%" height="500"></svg>
+            </div>
+            
+            <div class="info-panel">
+                <h4>GraphSAGE Training Steps:</h4>
+                <ol>
+                    <li><strong>Neighbor Sampling:</strong> Sample K neighbors untuk setiap node</li>
+                    <li><strong>Feature Aggregation:</strong> Aggregate features dari different node types</li>
+                    <li><strong>Embedding Learning:</strong> Learn representations yang capture behavioral patterns</li>
+                    <li><strong>Multi-hop Information:</strong> Capture information dari 2-3 hop neighbors</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div id="detection" class="step-content">
+            <div class="section graphsage-section">
+                <h2>🔍 Anomaly Detection Results</h2>
+                <div class="phase-indicator">Detecting Suspicious Patterns</div>
+            </div>
+            
+            <div class="graph-container">
+                <svg id="detection-graph" width="100%" height="500"></svg>
+            </div>
+            
+            <div class="info-panel">
+                <h4>Anomaly Patterns Detected:</h4>
+                <ul>
+                    <li><strong>Unusual File Access:</strong> User mengakses file diluar scope normal</li>
+                    <li><strong>Suspicious Web Activity:</strong> Akses ke URL yang mencurigakan</li>
+                    <li><strong>Off-hours Activity:</strong> Aktivitas di luar jam kerja normal</li>
+                    <li><strong>Bulk Data Movement:</strong> Transfer file dalam jumlah besar</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div id="graphsvx" class="step-content">
+            <div class="section graphsvx-section">
+                <h2>🔬 GraphSVX Interpretation</h2>
+                <div class="phase-indicator">Explaining Anomaly Decisions</div>
+            </div>
+            
+            <div class="graph-container">
+                <svg id="graphsvx-graph" width="100%" height="500"></svg>
+            </div>
+            
+            <div class="info-panel">
+                <h4>GraphSVX Explanation Features:</h4>
+                <ul>
+                    <li><strong>Node Importance:</strong> Nodes mana yang paling berkontribusi ke prediksi</li>
+                    <li><strong>Edge Importance:</strong> Relationships mana yang paling suspicious</li>
+                    <li><strong>Subgraph Explanation:</strong> Local neighborhood yang menyebabkan anomaly</li>
+                    <li><strong>Feature Attribution:</strong> Features apa yang paling berpengaruh</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const nodeTypes = {
+            user: { color: '#3498db', symbol: 'circle' },
+            pc: { color: '#2ecc71', symbol: 'rect' },
+            file: { color: '#f39c12', symbol: 'diamond' },
+            url: { color: '#9b59b6', symbol: 'triangle' }
+        };
+        
+        // Sample data
+        const sampleData = {
+            nodes: [
+                { id: 'user1', type: 'user', name: 'Alice Smith', anomalous: false },
+                { id: 'user2', type: 'user', name: 'Bob Johnson', anomalous: true },
+                { id: 'user3', type: 'user', name: 'Carol Davis', anomalous: false },
+                { id: 'pc1', type: 'pc', name: 'PC-Finance-01', anomalous: false },
+                { id: 'pc2', type: 'pc', name: 'PC-HR-02', anomalous: true },
+                { id: 'pc3', type: 'pc', name: 'PC-IT-03', anomalous: false },
+                { id: 'file1', type: 'file', name: 'payroll.xlsx', anomalous: true },
+                { id: 'file2', type: 'file', name: 'budget.pdf', anomalous: false },
+                { id: 'file3', type: 'file', name: 'employee_data.csv', anomalous: true },
+                { id: 'url1', type: 'url', name: 'suspicious-site.com', anomalous: true },
+                { id: 'url2', type: 'url', name: 'company-portal.com', anomalous: false },
+                { id: 'url3', type: 'url', name: 'external-cloud.com', anomalous: true }
+            ],
+            links: [
+                { source: 'user1', target: 'pc1', type: 'logon', weight: 1 },
+                { source: 'user2', target: 'pc2', type: 'logon', weight: 1 },
+                { source: 'user2', target: 'pc1', type: 'logon', weight: 1, anomalous: true },
+                { source: 'user1', target: 'file2', type: 'access', weight: 1 },
+                { source: 'user2', target: 'file1', type: 'access', weight: 1, anomalous: true },
+                { source: 'user2', target: 'file3', type: 'copy', weight: 1, anomalous: true },
+                { source: 'user1', target: 'url2', type: 'browse', weight: 1 },
+                { source: 'user2', target: 'url1', type: 'browse', weight: 1, anomalous: true },
+                { source: 'user2', target: 'url3', type: 'browse', weight: 1, anomalous: true },
+                { source: 'pc2', target: 'file1', type: 'local_access', weight: 1 },
+                { source: 'pc1', target: 'file3', type: 'transfer', weight: 1, anomalous: true }
+            ]
+        };
+        
+        let currentStep = 'overview';
+        
+        function showStep(step) {
+            // Update buttons
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${step}`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.step-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(step).classList.add('active');
+            
+            currentStep = step;
+            
+            // Render appropriate graph
+            setTimeout(() => renderGraph(step), 100);
+        }
+        
+        function renderGraph(step) {
+            const svgId = `${step}-graph`;
+            const svg = d3.select(`#${svgId}`);
+            svg.selectAll("*").remove();
+            
+            const width = parseInt(svg.style('width'));
+            const height = parseInt(svg.style('height'));
+            
+            const simulation = d3.forceSimulation(sampleData.nodes)
+                .force("link", d3.forceLink(sampleData.links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+            
+            // Add links
+            const link = svg.append("g")
+                .selectAll("line")
+                .data(sampleData.links)
+                .join("line")
+                .attr("class", d => {
+                    let classes = "link";
+                    if (step === 'detection' && d.anomalous) classes += " anomaly";
+                    if (step === 'graphsvx' && d.anomalous) classes += " explanation-path";
+                    return classes;
+                })
+                .attr("stroke-width", d => Math.sqrt(d.weight) * 2);
+            
+            // Add nodes
+            const node = svg.append("g")
+                .selectAll("g")
+                .data(sampleData.nodes)
+                .join("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            // Add node shapes
+            node.each(function(d) {
+                const g = d3.select(this);
+                const nodeColor = d.anomalous && (step === 'detection' || step === 'graphsvx') ? 
+                    '#e74c3c' : nodeTypes[d.type].color;
+                
+                if (d.type === 'user') {
+                    g.append("circle")
+                        .attr("r", 15)
+                        .attr("fill", nodeColor)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                } else if (d.type === 'pc') {
+                    g.append("rect")
+                        .attr("width", 24)
+                        .attr("height", 24)
+                        .attr("x", -12)
+                        .attr("y", -12)
+                        .attr("fill", nodeColor)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2)
+                        .attr("rx", 3);
+                } else if (d.type === 'file') {
+                    g.append("polygon")
+                        .attr("points", "0,-15 12,0 0,15 -12,0")
+                        .attr("fill", nodeColor)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                } else if (d.type === 'url') {
+                    g.append("polygon")
+                        .attr("points", "0,-15 13,10 -13,10")
+                        .attr("fill", nodeColor)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                }
+            });
+            
+            // Add labels
+            node.append("text")
+                .text(d => d.name.length > 12 ? d.name.substring(0, 12) + '...' : d.name)
+                .attr("dx", 20)
+                .attr("dy", 5)
+                .style("font-size", "12px")
+                .style("font-weight", "bold")
+                .style("fill", "#2c3e50");
+            
+            // Add step-specific annotations
+            if (step === 'graphsage') {
+                addGraphSAGEAnnotations(svg, width, height);
+            } else if (step === 'graphsvx') {
+                addGraphSVXAnnotations(svg, width, height);
+            }
+            
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                node.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+            
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+        
+        function addGraphSAGEAnnotations(svg, width, height) {
+            // Add sampling circles
+            svg.append("circle")
+                .attr("cx", width * 0.3)
+                .attr("cy", height * 0.3)
+                .attr("r", 80)
+                .attr("fill", "none")
+                .attr("stroke", "#3498db")
+                .attr("stroke-width", 3)
+                .attr("stroke-dasharray", "10,5")
+                .style("opacity", 0.7);
+            
+            svg.append("text")
+                .attr("x", width * 0.3)
+                .attr("y", height * 0.2)
+                .attr("text-anchor", "middle")
+                .style("font-size", "14px")
+                .style("font-weight", "bold")
+                .style("fill", "#3498db")
+                .text("Neighbor Sampling");
+        }
+        
+        function addGraphSVXAnnotations(svg, width, height) {
+            // Add explanation highlights
+            svg.append("rect")
+                .attr("x", width * 0.1)
+                .attr("y", height * 0.1)
+                .attr("width", width * 0.8)
+                .attr("height", 40)
+                .attr("fill", "#f39c12")
+                .attr("opacity", 0.3)
+                .attr("rx", 5);
+            
+            svg.append("text")
+                .attr("x", width * 0.5)
+                .attr("y", height * 0.14)
+                .attr("text-anchor", "middle")
+                .style("font-size", "16px")
+                .style("font-weight", "bold")
+                .style("fill", "#f39c12")
+                .text("🔍 Explanation: User2 → Suspicious Files & URLs");
+        }
+        
+        // Initialize
+        renderGraph('overview');
+    </script>
+</body>
+</html>

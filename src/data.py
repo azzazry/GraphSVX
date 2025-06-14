@@ -243,6 +243,7 @@ def synthetic_data(dataset, dirname, train_ratio=0.8, input_dim=10):
 
     # If already created, do not recreate
     if os.path.exists(data_path):
+        torch.serialization.add_safe_globals([SimpleNamespace])
         data = torch.load(data_path)
 
     else:

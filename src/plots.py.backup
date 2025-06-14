@@ -11,49 +11,31 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.data import Data
 from torch_geometric.utils import k_hop_subgraph, to_networkx, subgraph
 
-def plot_dist(noise_feats, normal_feats, title, path):
+
+def plot_dist(noise_feats, label=None, ymax=1.1, color=None, title=None, save_path=None):
     """
-    Fixed version of plot_dist function that resolves the kde_kws error
+    Kernel density plot of the number of noisy features included in explanations, 
+    for a certain number of test samples
     """
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Plot KDE for noise features
-    if len(noise_feats) > 0:
-        sns.kdeplot(data=noise_feats, 
-                   ax=ax, 
-                   label='Noise Features',
-                   color='red',
-                   linewidth=2)
-    
-    # Plot KDE for normal features  
-    if len(normal_feats) > 0:
-        sns.kdeplot(data=normal_feats,
-                   ax=ax,
-                   label='Normal Features', 
-                   color='blue',
-                   linewidth=2)
-    
-    # Set title and labels
-    ax.set_title(title, fontsize=14, fontweight='bold')
-    ax.set_xlabel('Feature Values', fontsize=12)
-    ax.set_ylabel('Density', fontsize=12)
-    
-    # Add legend
-    ax.legend()
-    
-    # Add grid for better readability
-    ax.grid(True, alpha=0.3)
-    
-    # Tight layout
-    plt.tight_layout()
-    
-    # Save the plot
-    plt.savefig(path, dpi=300, bbox_inches='tight')
-    plt.close()
+    if not any(noise_feats):  # handle special case where noise_feats=0
+        noise_feats[0] = 0.25
+
+    # plt.switch_backend("agg")
+    sns.set_style('darkgrid')
+    #sns.set_context("talk")
+    ax = sns.distplot(noise_feats, hist=False, kde=True,
+                      kde_kws={'label': label}, color=color)
+    sns.set(font_scale=1.5)  # , rc={"lines.linewidth": 2})
+    plt.xlim(-3, 8)
+    plt.ylim(ymin=0.0, ymax=ymax)
+
+    if title:
+        plt.title(title)
+
+    if save_path:
+        plt.savefig(save_path)
+
+    return ax
 
 
 def __flow__(model):

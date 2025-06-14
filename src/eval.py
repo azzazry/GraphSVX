@@ -13,7 +13,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from torch_geometric.nn import GNNExplainer as GNNE
+from torch_geometric.explain import GNNExplainer as GNNE
 
 from src.models import GAT, GCN
 from src.train import accuracy, train_and_val
@@ -690,8 +690,8 @@ def filter_useless_nodes(args_dataset,
 
         # Plot of kernel density estimates of number of noisy features included in explanation
         # Do for all benchmarks (with diff colors) and plt.show() to get on the same graph
-        plot_dist(pred_class_num_noise_neis,
-                    label=explainer_name, color=COLOURS[c])
+        # plot_dist(pred_class_num_noise_neis,
+        #             label=explainer_name, color=COLOURS[c])
 
     # Random explainer - plot estimated kernel density
     total_num_noise_neis = noise_nodes_for_random(

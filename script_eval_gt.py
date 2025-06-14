@@ -13,6 +13,7 @@ import configs
 from src.data import prepare_data, selected_data
 from src.eval import eval_Mutagenicity, eval_syn, eval_syn6
 from utils.io_utils import fix_seed
+from src.models import GcnEncoderNode
 
 
 def main(): 
@@ -32,7 +33,8 @@ def main():
     
     # Load model 
     model_path = 'models/GCN_model_{}.pth'.format(args.dataset)
-    model = torch.load(model_path)
+    torch.serialization.add_safe_globals([GcnEncoderNode])
+    model = torch.load(model_path, weights_only=False)
 
     # Evaluate GraphSVX 
     if args.dataset == 'Mutagenicity':
